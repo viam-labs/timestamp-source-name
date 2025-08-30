@@ -25,6 +25,7 @@ var (
 
 const (
 	timestampFormat = "2006-01-02T15:04:05.000Z07:00"
+	nImages = 30
 )
 
 func init() {
@@ -135,8 +136,8 @@ func (s *timeStampSourceNameTimestampSourceNames) Images(ctx context.Context, ex
 	now := time.Now()
 	timestampStr := now.Format(timestampFormat)
 	// 5 images, all blue, different timestamp source names
-	result := make([]camera.NamedImage, 5)
-	for i := 0; i < 5; i++ {
+	result := make([]camera.NamedImage, nImages)
+	for i := 0; i < nImages; i++ {
 		result[i].SourceName = fmt.Sprintf("%s_%d", timestampStr, i)
 		result[i].Image = s.bluePic
 	}
