@@ -25,6 +25,8 @@ var (
 
 const (
 	timestampFormat = "2006-01-02T15:04:05.000Z07:00"
+	height          = 4320
+	width           = 10240
 )
 
 func init() {
@@ -78,10 +80,10 @@ func newTimeStampSourceNameTimestampSourceNames(ctx context.Context, deps resour
 func NewTimestampSourceNames(ctx context.Context, deps resource.Dependencies, name resource.Name, conf *Config, logger logging.Logger) (camera.Camera, error) {
 
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
-	img := image.NewRGBA(image.Rect(0, 0, 600, 400))
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	blue := color.RGBA{0, 0, 255, 255}
-	for y := 0; y < 400; y++ {
-		for x := 0; x < 600; x++ {
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
 			img.Set(x, y, blue)
 		}
 	}
