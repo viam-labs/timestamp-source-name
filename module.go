@@ -25,7 +25,6 @@ var (
 
 const (
 	timestampFormat = "2006-01-02T15:04:05.000Z07:00"
-	nImages = 30
 )
 
 func init() {
@@ -37,20 +36,7 @@ func init() {
 }
 
 type Config struct {
-	/*
-		Put config attributes here. There should be public/exported fields
-		with a `json` parameter at the end of each attribute.
-
-		Example config struct:
-			type Config struct {
-				Pin   string `json:"pin"`
-				Board string `json:"board"`
-				MinDeg *float64 `json:"min_angle_deg,omitempty"`
-			}
-
-		If your model does not need a config, replace *Config in the init
-		function with resource.NoNativeConfig
-	*/
+	NImages int `json:"n_images"`
 }
 
 // Validate ensures all parts of the config are valid and important fields exist.
@@ -59,6 +45,9 @@ type Config struct {
 // resource being validated; e.g. "components.0".
 func (cfg *Config) Validate(path string) ([]string, []string, error) {
 	// Add config validation code here
+	if cfg.NImages < 1 {
+		return nil, nil, errors.New("n_images attribute must be greater than 0")
+	}
 	return nil, nil, nil
 }
 
@@ -67,6 +56,7 @@ type timeStampSourceNameTimestampSourceNames struct {
 
 	name    resource.Name
 	bluePic image.Image
+	nImages int
 
 	logger logging.Logger
 	cfg    *Config
@@ -99,6 +89,7 @@ func NewTimestampSourceNames(ctx context.Context, deps resource.Dependencies, na
 	s := &timeStampSourceNameTimestampSourceNames{
 		name:       name,
 		bluePic:    img,
+		nImages:    conf.NImages,
 		logger:     logger,
 		cfg:        conf,
 		cancelCtx:  cancelCtx,
@@ -136,8 +127,8 @@ func (s *timeStampSourceNameTimestampSourceNames) Images(ctx context.Context, ex
 	now := time.Now()
 	timestampStr := now.Format(timestampFormat)
 	// 5 images, all blue, different timestamp source names
-	result := make([]camera.NamedImage, nImages)
-	for i := 0; i < nImages; i++ {
+	result := make([]camera.NamedImage, s.nImages)
+	for i := 0; i < s.nImages; i++ {
 		result[i].SourceName = fmt.Sprintf("%s_%d", timestampStr, i)
 		result[i].Image = s.bluePic
 	}
