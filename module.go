@@ -10,12 +10,13 @@ import (
 
 	camera "go.viam.com/rdk/components/camera"
 	"go.viam.com/rdk/components/camera/rtppassthrough"
+	"go.viam.com/rdk/data"
 	"go.viam.com/rdk/gostream"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/resource"
-	"go.viam.com/rdk/rimage"
 	"go.viam.com/rdk/spatialmath"
+	"go.viam.com/rdk/utils"
 )
 
 var (
@@ -108,31 +109,21 @@ func (s *timeStampSourceNameTimestampSourceNames) Stream(ctx context.Context, er
 	panic("not implemented")
 }
 
-// Image returns a byte slice representing an image that tries to adhere to the MIME type hint.
-// Image also may return metadata about the frame.
-func (s *timeStampSourceNameTimestampSourceNames) Image(ctx context.Context, mimeType string, extra map[string]interface{}) ([]byte, camera.ImageMetadata, error) {
-	theBytes, err := rimage.EncodeImage(ctx, s.bluePic, mimeType)
-	if err != nil {
-		return nil, camera.ImageMetadata{}, err
-	}
-	meta := camera.ImageMetadata{
-		MimeType: mimeType,
-	}
-	return theBytes, meta, nil
-
-}
-
 // Images is used for getting simultaneous images from different imagers,
 // along with associated metadata (just timestamp for now). It's not for getting a time series of images from the same imager.
 // The extra parameter can be used to pass additional options to the camera resource.
-func (s *timeStampSourceNameTimestampSourceNames) Images(ctx context.Context, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
+func (s *timeStampSourceNameTimestampSourceNames) Images(ctx context.Context, filterSourceNames []string, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
 	now := time.Now()
 	timestampStr := now.Format(timestampFormat)
 	// 5 images, all blue, different timestamp source names
 	result := make([]camera.NamedImage, s.nImages)
 	for i := 0; i < s.nImages; i++ {
-		result[i].SourceName = fmt.Sprintf("%s_%d", timestampStr, i)
-		result[i].Image = s.bluePic
+		sourceName := fmt.Sprintf("%s_%d", timestampStr, i)
+		ni, err := camera.NamedImageFromImage(s.bluePic, sourceName, utils.MimeTypePNG, data.Annotations{})
+		if err != nil {
+			return nil, resource.ResponseMetadata{}, err
+		}
+		result[i] = ni
 	}
 
 	meta := resource.ResponseMetadata{
@@ -143,7 +134,7 @@ func (s *timeStampSourceNameTimestampSourceNames) Images(ctx context.Context, ex
 
 // NextPointCloud returns the next immediately available point cloud, not necessarily one
 // a part of a sequence. In the future, there could be streaming of point clouds.
-func (s *timeStampSourceNameTimestampSourceNames) NextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+func (s *timeStampSourceNameTimestampSourceNames) NextPointCloud(ctx context.Context, extra map[string]interface{}) (pointcloud.PointCloud, error) {
 	panic("not implemented")
 }
 
@@ -154,6 +145,10 @@ func (s *timeStampSourceNameTimestampSourceNames) Properties(ctx context.Context
 		SupportsPCD: false,
 	}, nil
 }
+func (s *timeStampSourceNameTimestampSourceNames) Status(ctx context.Context) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
 func (s *timeStampSourceNameTimestampSourceNames) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
 	panic("not implemented")
 }
